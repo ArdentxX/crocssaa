@@ -1,0 +1,272 @@
+/* Modal container */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8); /* Dark overlay */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+/* Modal content */
+.modal-content {
+    background-color: #fff;
+    padding: 40px;
+    border: 10px solid #0997c5;
+    border-radius: 50px;
+    width: 500px; /* Increase width */
+    max-width: 100%;
+    color: black;
+    font-family: 'Arial', sans-serif;
+}
+
+/* Close button */
+.close-button {
+    margin-left: 450px;
+    margin-bottom: 3000px;
+    font-size: 50px;
+    cursor: pointer;
+    color: rgb(255, 0, 0);
+}
+
+/* Header section (Edytuj profil) */
+.modal-content h2 {
+    font-size: 24px;
+    color: #0997c5;
+    text-align: left;
+    margin-bottom: 30px;
+    font-weight: bold;
+}
+
+/* Input label styling */
+.label {
+    display: block;
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+/* Input field styling */
+.input-field {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    font-size: 16px;
+    background-color: #292929;
+}
+
+/* Bio textarea field */
+.textarea-field {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #f5f5f5;
+    font-size: 16px;
+    resize: none;
+    height: 80px;
+    margin-bottom: 10px;
+}
+
+/* Profile picture container */
+.profile-picture {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+/* Profile picture image */
+.profile-picture img {
+    border-radius: 50%;
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+}
+
+/* Section separators */
+.separator {
+    border-bottom: 1px solid #0997c5;
+    margin: 20px 0;
+}
+
+/* Button styling */
+.submit-button, .cancel-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 20px;
+    width: 100px;
+}
+
+/* Save button styling */
+.submit-button {
+    background-color: #1934497a;
+    color: white;
+    margin-right: 10px;
+}
+
+.submit-button:hover {
+    background-color: #0997c5;
+}
+
+/* Cancel button styling */
+.cancel-button {
+    background-color: #666;
+    color: white;
+}
+
+.cancel-button:hover {
+    background-color: #ff0000;
+}
+
+.navbar {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: rgba(0, 0, 0, 0);
+    color: #fff;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    
+}
+
+.navbar-brand {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.navbar-search {
+    padding: 5px;
+    border-radius: 4px;
+    border: none;
+    outline: none;
+    font-size: 16px;
+}
+
+.navbar-right {
+    display: flex;
+    align-items: center;
+    margin-right: 50px;
+}
+
+.navbar-profile-pic {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    cursor: pointer;
+}
+
+/* Sidebar container */
+.main-content {
+    width: 250px; /* Fixed width for the sidebar */
+    height: 100vh; /* Full height of the viewport */
+    background-color: rgba(0, 0, 0, 0.7); /* Background color */
+    color: #fff; /* Text color */
+    display: flex;
+    flex-direction: column; /* Vertical orientation */
+    padding: 20px;
+    position: fixed; /* Fixed position on the left side */
+    top: 0;
+    left: 0;
+    z-index: 999;
+    padding: 80px 20px 20px 20px;
+    border-right: 1px solid floralwhite;
+    transform: translateX(-100%); /* Start off-screen to the left */
+    transition: transform 0.3s ease; /* Smooth sliding transition */
+}
+
+/* When the sidebar is active (visible) */
+.main-content.active {
+    transform: translateX(0); /* Slide in from the left */
+}
+
+/* Toggle button for the sidebar */
+.sidebar-toggle {
+    position: fixed; /* Fixed position to stay on the left edge */
+    top: 50%;
+    left: 0; /* Align to the left edge */
+    width: 40px;
+    height: 40px;
+    background-color: #0997c5;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 20px;
+    transform: translateY(-50%); /* Center vertically */
+    z-index: 1001;
+    transition: background-color 0.3s;
+}
+
+/* Hover effect for the toggle button */
+.sidebar-toggle:hover {
+    background-color: #0d8fbd;
+}
+
+  
+.main-title {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.profile-info {
+    margin-top: 20px;
+}
+
+.profile-header {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.profile-details p {
+    margin: 5px 0;
+    font-size: 16px;
+}
+
+.profile-details p:not(:last-child) {
+    border-bottom: 1px solid #444; /* Separator line between items */
+    padding-bottom: 8px;
+}
+/* Add styles for the profile preview image */
+.profile-preview {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    cursor: pointer;
+    display: block;
+    margin: 0 auto;
+}
+
+.click-to-change {
+    text-align: center;
+    font-size: 0.9em;
+    color: #888;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.image-upload {
+    text-align: center;
+    margin-bottom: 20px;
+}
