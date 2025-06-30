@@ -61,11 +61,12 @@ def homepage(username):
     if user:
         data = user.personal_data
         profile_data = {
-            'first_name' : data.first_name if data else None,
-            'last_name' : data.last_name if data else None,
-            'location' : data.location if data else None,
-            'hobby' : data.hobby if data else None,
-            'profile_pic' : data.profile_pic if data else None
+            'first_name': data.first_name if data else None,
+            'last_name': data.last_name if data else None,
+            'location': data.location if data else None,
+            'hobby': data.hobby if data else None,
+            'profile_pic': data.profile_pic if data else None,
+            'card_image': data.card_image if data else None  # <--- tu dodaj
         }
         return jsonify({'message': f'Welcome, {username}!', 'profile': profile_data}), 200
     return jsonify({'message': 'Unauthorized'}), 401
@@ -127,6 +128,37 @@ def upload_pic(username):
         
         return jsonify({"message": "Picture succesfully aded", "profile_pic": filename}), 200 
     
+    return jsonify({"message": "File type not allowed"}), 400
+
+@app.route('/upload_card_image/<username>', methods=["POST"])
+def upload_card_image(username):
+    if 'file' not in request.files:
+        return jsonify({'message': "No selected file"}), 400
+
+    file = request.files['file']
+
+    if file.filename == '':
+        return jsonify({'message': "No selected file"}), 400
+
+    if file:
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            return jsonify({'message': 'User not found'}), 400
+
+        profile = Personal_Data.query.filter_by(user_id=user.id).first()
+        if not profile:
+            profile = Personal_Data(user_id=user.id)
+
+        profile.card_image = filename
+        db.session.add(profile)
+        db.session.commit()
+
+        return jsonify({"message": "Card image successfully added", "card_image": filename}), 200
+
     return jsonify({"message": "File type not allowed"}), 400
 
 

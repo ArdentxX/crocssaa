@@ -16,6 +16,7 @@ class Personal_Data(db.Model):
     location = db.Column(db.String(120), nullable=True)
     hobby = db.Column(db.String(300) , nullable=True)
     profile_pic = db.Column(db.String(120) , nullable=True ,default='Nowy_projekt_5.png')
+    card_image = db.Column(db.String(120), nullable=True)
 
     user_id = db.Column(db.INTEGER, db.ForeignKey('user.id'), unique=True)
     user = db.relationship('User' , back_populates='personal_data')

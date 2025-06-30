@@ -60,6 +60,7 @@
     margin-bottom: 20px;
     font-size: 16px;
     background-color: #292929;
+    color: white;
 }
 
 /* Bio textarea field */
@@ -141,7 +142,6 @@
     top: 0;
     left: 0;
     z-index: 1000;
-    
 }
 
 .navbar-brand {
@@ -221,7 +221,6 @@
     background-color: #0d8fbd;
 }
 
-  
 .main-title {
     font-size: 24px;
     font-weight: bold;
@@ -247,6 +246,7 @@
     border-bottom: 1px solid #444; /* Separator line between items */
     padding-bottom: 8px;
 }
+
 /* Add styles for the profile preview image */
 .profile-preview {
     width: 100px;
@@ -270,8 +270,19 @@
     text-align: center;
     margin-bottom: 20px;
 }
-/* Chat panel styles with slide-up animation */
 
+/* Swipe photo preview in modal */
+.card-image-preview {
+    display: block;
+    margin: 20px auto;
+    width: 300px;
+    height: 400px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 2px solid #0997c5;
+}
+
+/* Chat panel styles with slide-up animation */
 .chat-panel {
   position: fixed;
   right: 20px;
@@ -310,4 +321,23 @@
   padding: 10px;
   overflow-y: auto;
   flex-grow: 1;
+}
+
+.profile-card {
+  margin: 2rem auto;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 16px;
+  max-width: 300px;
+  text-align: center;
+  box-shadow: 0 0 8px rgba(0,0,0,0.1);
+  background-color: #fff;
+}
+
+.profile-center-pic {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-top: 1rem;
 }
