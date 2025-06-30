@@ -25,9 +25,7 @@ const LoggedHomePage = () => {
   const fetchProfileData = async () => {
     try {
       const response = await fetch(`http://localhost:5000/homepage/${username}`, {
-        headers: {
-          username,
-        },
+        headers: { username },
       });
       if (response.ok) {
         const data = await response.json();
@@ -41,19 +39,13 @@ const LoggedHomePage = () => {
     }
   };
 
-  const handleProfilePicChange = (e) => {
-    setProfilePic(e.target.files[0]);
-  };
-
-  const handleCardImageChange = (e) => {
-    setCardImageFile(e.target.files[0]); // pojedynczy plik do swipe
-  };
+  const handleProfilePicChange = (e) => setProfilePic(e.target.files[0]);
+  const handleCardImageChange = (e) => setCardImageFile(e.target.files[0]);
 
   const HandleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      // Upload profile pic if changed
       let uploadedProfilePic = profile.profile_pic;
       if (profilePic) {
         const formData = new FormData();
@@ -73,7 +65,6 @@ const LoggedHomePage = () => {
         }
       }
 
-      // Upload card image (swipe photo) if selected
       let uploadedCardImage = profile.card_image;
       if (cardImageFile) {
         const formData = new FormData();
@@ -93,19 +84,16 @@ const LoggedHomePage = () => {
         }
       }
 
-      // Update profile data
       const response = await fetch(`http://localhost:5000/profile/${username}`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           first_name: firstName,
           last_name: lastName,
-          location: location,
+          location,
           hobby: hobbys,
           profile_pic: uploadedProfilePic,
-          card_image: uploadedCardImage, // jeśli chcesz, możesz aktualizować od razu
+          card_image: uploadedCardImage,
         }),
       });
 
@@ -133,16 +121,8 @@ const LoggedHomePage = () => {
     setShowModal(true);
   };
 
-  const HandleCloseModal = () => {
-    setShowModal(false);
-  };
-
-  const handleSearch = () => {
-    if (searchQuery.trim() !== "") {
-      navigate(`/search_profiles?q=${searchQuery}`);
-    }
-  };
-
+  const HandleCloseModal = () => setShowModal(false);
+  const handleSearch = () => searchQuery.trim() !== "" && navigate(`/search_profiles?q=${searchQuery}`);
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
   const toggleChat = () => setChatVisible((prev) => !prev);
 
@@ -184,16 +164,12 @@ const LoggedHomePage = () => {
         </div>
       </nav>
 
-      {/* Chat panel */}
       <div className={`chat-panel ${chatVisible ? "visible" : ""}`}>
         <div className="chat-header">
           Czaty
-          <button onClick={toggleChat} style={{ cursor: "pointer" }}>
-            X
-          </button>
+          <button onClick={toggleChat} style={{ cursor: "pointer" }}>X</button>
         </div>
         <div className="chat-content">
-          {/* Tutaj zawartość czatu */}
           <p>Tu będzie czat...</p>
         </div>
       </div>
@@ -202,6 +178,7 @@ const LoggedHomePage = () => {
 
       <div className={`main-content ${sidebarOpen ? "active" : ""}`}>
         <h1 className="main-name">Profile</h1>
+
         <div className="profile-info">
           <h3 className="profile-header">Profile Information</h3>
           <div className="profile-details">
@@ -210,33 +187,39 @@ const LoggedHomePage = () => {
             <p>Location: {profile.location || "Not provided"}</p>
             <p>Hobbys: {profile.hobby || "Not provided"}</p>
           </div>
-
-
-
-          {/* Wyświetl swipe photo (card_image) na środku w 300x400 */}
-          <div style={{ display: "flex", justifyContent: "center", marginTop: 20 }}>
-            {profile.card_image ? (
-              <img
-                src={`http://localhost:5000/uploads/${profile.card_image}`}
-                alt="Swipe card"
-                style={{ width: 300, height: 400, objectFit: "cover" }}
-              />
-            ) : (
-              <p>No swipe photo uploaded</p>
-            )}
-          </div>
         </div>
+      </div>
+
+      {/* ✅ NEW container centered for swipe photo */}
+      <div style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        marginTop: "30px"
+      }}>
+        {profile.card_image ? (
+          <img
+            src={`http://localhost:5000/swipe_uploads/${profile.card_image}`}
+            alt="Swipe"
+            style={{
+              width: "600px",
+              height: "800px",
+              objectFit: "cover",
+              borderRadius: "8px",
+              border: "2px solid #ccc"
+            }}
+          />
+        ) : (
+          <p style={{ color: "gray" }}>No swipe photo uploaded</p>
+        )}
       </div>
 
       {showModal && (
         <div className="modal">
           <div className="modal-content">
-            <span className="close-button" onClick={HandleCloseModal}>
-              &times;
-            </span>
+            <span className="close-button" onClick={HandleCloseModal}>&times;</span>
             <h2>Edit Profile</h2>
             <form onSubmit={HandleSubmit}>
-              {/* Profilowe zdjęcie */}
               <div className="image-upload">
                 <input
                   type="file"
@@ -267,60 +250,29 @@ const LoggedHomePage = () => {
                 <p className="click-to-change">Click to change photo</p>
               </div>
 
-              {/* Dodawanie jednego zdjęcia do swipowania */}
               <div className="card-image-upload" style={{ marginTop: 20 }}>
-                <label htmlFor="card-image-input" className="label">
-                  Add Swipe Photo
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  id="card-image-input"
-                  onChange={handleCardImageChange}
-                />
+                <label htmlFor="card-image-input" className="label">Add Swipe Photo</label>
+                <input type="file" accept="image/*" id="card-image-input" onChange={handleCardImageChange} />
               </div>
 
-              {/* Pozostałe pola */}
               <div>
                 <label className="label">First name</label>
-                <input
-                  className="input-field"
-                  type="text"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                />
+                <input className="input-field" type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
               </div>
               <div>
                 <label className="label">Last name</label>
-                <input
-                  className="input-field"
-                  type="text"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                />
+                <input className="input-field" type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} />
               </div>
               <div>
                 <label className="label">Location</label>
-                <input
-                  className="input-field"
-                  type="text"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                />
+                <input className="input-field" type="text" value={location} onChange={(e) => setLocation(e.target.value)} />
               </div>
               <div>
                 <label className="label">Hobbys</label>
-                <input
-                  className="input-field"
-                  type="text"
-                  value={hobbys}
-                  onChange={(e) => setHobbys(e.target.value)}
-                />
+                <input className="input-field" type="text" value={hobbys} onChange={(e) => setHobbys(e.target.value)} />
               </div>
 
-              <button type="submit" className="submit-button">
-                Save Profile
-              </button>
+              <button type="submit" className="submit-button">Save Profile</button>
             </form>
             {message && <p className="message">{message}</p>}
           </div>
