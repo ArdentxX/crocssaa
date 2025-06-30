@@ -9,10 +9,11 @@ const LoggedHomePage = () => {
     const [location, setLocation] = useState('');
     const [hobbys, setHobbys] = useState('');
     const [message, setMessage] = useState('');
-    const [sidebarOpen, setSidebarOpen] = useState(false); 
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [chatVisible, setChatVisible] = useState(false);
     const username = localStorage.getItem('username');
     const navigate = useNavigate();
-    const [profile, setProfile] = useState({}); 
+    const [profile, setProfile] = useState({});
     const [profilePic, setProfilePic] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState([]);
@@ -28,7 +29,7 @@ const LoggedHomePage = () => {
                     'username': username,
                 },
             });
-    
+
             if (response.ok) {
                 const data = await response.json();
                 setProfile(data.profile);
@@ -49,7 +50,7 @@ const LoggedHomePage = () => {
         e.preventDefault();
 
         try {
-            let uploadedProfilePic = profile.profile_pic; 
+            let uploadedProfilePic = profile.profile_pic;
 
             if (profilePic) {
                 const formData = new FormData();
@@ -61,8 +62,8 @@ const LoggedHomePage = () => {
                 });
 
                 if (uploadResponse.ok) {
-                    const data = await uploadResponse.json(); 
-                    uploadedProfilePic = data.profile_pic; 
+                    const data = await uploadResponse.json();
+                    uploadedProfilePic = data.profile_pic;
                     HandleCloseModal();
                 } else {
                     setMessage('Failed to upload photo');
@@ -80,7 +81,7 @@ const LoggedHomePage = () => {
                     last_name: lastName,
                     location: location,
                     hobby: hobbys,
-                    profile_pic: uploadedProfilePic 
+                    profile_pic: uploadedProfilePic
                 }),
             });
 
@@ -101,7 +102,7 @@ const LoggedHomePage = () => {
         setLastName(profile.last_name || '');
         setLocation(profile.location || '');
         setHobbys(profile.hobby || '');
-        setProfilePic(null); 
+        setProfilePic(null);
         setShowModal(true);
     };
 
@@ -110,17 +111,18 @@ const LoggedHomePage = () => {
     };
 
     const handleSearch = async () => {
-        if (searchQuery.trim() !== '' ) {
-        navigate(`/search_profiles?q=${searchQuery}`)
+        if (searchQuery.trim() !== '') {
+            navigate(`/search_profiles?q=${searchQuery}`)
         };
     };
 
     const toggleSidebar = () => {
         setSidebarOpen(!sidebarOpen);
     };
-    const test =() =>{
-        console.log('jebac czarnych')
-    }
+
+    const toggleChat = () => {
+        setChatVisible(prev => !prev);
+    };
 
     return (
         <div className="logged-homepage">
@@ -132,12 +134,17 @@ const LoggedHomePage = () => {
                     </h2>
                 </div>
                 <div className="navbar-center">
-                    <input type="text" placeholder="Search..." className="navbar-search" onChange={(e) => setSearchQuery(e.target.value)}/>
+                    <input
+                        type="text"
+                        placeholder="Search..."
+                        className="navbar-search"
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
                     <button className="search-button" onClick={handleSearch}>Search</button>
                 </div>
                 <div className="navbar-right">
                     <button onClick={HandleOpenModal}>Edit Profile</button>
-                    <button className="messages-button">Messages</button>
+                    <button className="messages-button" onClick={toggleChat}>Messages</button>
                     {profile.profile_pic && (
                         <img
                             src={`http://localhost:5000/uploads/${profile.profile_pic}`}
@@ -148,7 +155,21 @@ const LoggedHomePage = () => {
                     )}
                 </div>
             </nav>
+
+            {/* Chat panel */}
+            <div className={`chat-panel ${chatVisible ? 'visible' : ''}`}>
+                <div className="chat-header">
+                    Czaty
+                    <button onClick={toggleChat} style={{ cursor: 'pointer' }}>X</button>
+                </div>
+                <div className="chat-content">
+                    {/* Tutaj zawartość czatu */}
+                    <p>Tu będzie czat...</p>
+                </div>
+            </div>
+
             {sidebarOpen && <div className="backdrop active" onClick={toggleSidebar}></div>}
+
             <div className={`main-content ${sidebarOpen ? 'active' : ''}`}>
                 <h1 className='main-name'>Profile</h1>
                 <div className="profile-info">
@@ -239,6 +260,7 @@ const LoggedHomePage = () => {
                     </div>
                 </div>
             )}
+
             {message && <p>{message}</p>}
         </div>
     );
