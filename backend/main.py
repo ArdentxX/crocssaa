@@ -4,7 +4,7 @@ from models import User, Personal_Data
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import os
-
+import sqlite3
 
 # --- KONFIGURACJA UPLOADÓW ---
 
@@ -192,6 +192,34 @@ def search_profile():
 
     print(f"Results sent: {results}")
     return jsonify({"profiles": results})
+
+@app.route('/all_card_images')
+def all_card_images():
+    username = request.headers.get('username')
+
+    # Pobierz user_id aktualnego użytkownika
+    current_user = User.query.filter_by(username=username).first()
+    if not current_user:
+        return jsonify({"photos": []})
+
+    # Pobierz zdjęcia innych użytkowników
+    photos_query = Personal_Data.query.filter(
+        Personal_Data.user_id != current_user.id,
+        Personal_Data.card_image != None
+    ).all()
+
+    photos = [p.card_image for p in photos_query]
+
+    print("Fetched photos for swipe:", photos)
+    return jsonify({"photos": photos})
+
+
+@app.route('/swipe_uploads/<filename>')
+def swipe_uploads(filename):
+    return send_from_directory('swipe_uploads', filename)
+
+if __name__ == '__main__':
+    app.run(debug=True)
 
 
 if __name__ == "__main__":

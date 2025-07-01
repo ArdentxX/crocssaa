@@ -370,3 +370,32 @@
   font-weight: bold;
   cursor: pointer;
 }
+/* ✅ Swipe deck animations CSS additions */
+.swipe-card {
+  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+}
+.swipe-left {
+  transform: translateX(-700px) rotate(-20deg);
+  opacity: 0;
+}
+.swipe-right {
+  transform: translateX(700px) rotate(20deg);
+  opacity: 0;
+}
+.swipe-buttons {
+  margin-top: 20px;
+  display: flex;
+  gap: 20px;
+}
+.swipe-left-btn, .swipe-right-btn {
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  background-color: #1934497a;
+  color: white;
+  border: none;
+  border-radius: 5px;
+}
+.swipe-left-btn:hover, .swipe-right-btn:hover {
+  background-color: #0997c5;
+}
