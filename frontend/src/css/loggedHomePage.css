@@ -341,3 +341,32 @@
   object-fit: cover;
   margin-top: 1rem;
 }
+.crop-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999; /* większy niż edit profile modal */
+}
+
+.crop-container {
+  width: 400px;
+  height: 533px; /* 3:4 ratio */
+  background: white;
+  position: relative;
+}
+.crop-buttons {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+}
+.crop-buttons button {
+  padding: 10px 20px;
+  font-weight: bold;
+  cursor: pointer;
+}

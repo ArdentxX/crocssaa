@@ -1,6 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import Cropper from "react-easy-crop";
+import { getCroppedImg } from "../utils/cropImage";
 import "../css/loggedHomePage.css";
+import "react-easy-crop/react-easy-crop.css";
 
 const LoggedHomePage = () => {
   const [showModal, setShowModal] = useState(false);
@@ -14,9 +17,18 @@ const LoggedHomePage = () => {
   const [profilePic, setProfilePic] = useState(null);
   const [cardImageFile, setCardImageFile] = useState(null);
 
+  // Crop states
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+
+  const fileInputRef = useRef();
   const username = localStorage.getItem("username");
   const navigate = useNavigate();
   const [profile, setProfile] = useState({});
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     fetchProfileData();
@@ -40,7 +52,52 @@ const LoggedHomePage = () => {
   };
 
   const handleProfilePicChange = (e) => setProfilePic(e.target.files[0]);
-  const handleCardImageChange = (e) => setCardImageFile(e.target.files[0]);
+
+  const openCropModal = () => {
+    fileInputRef.current.click();
+  };
+
+  const handleFileSelectForCrop = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const imageUrl = URL.createObjectURL(file);
+      setSelectedImage(imageUrl);
+      setShowCropModal(true);
+    }
+  };
+
+  const onCropComplete = (_, croppedAreaPixels) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  };
+
+  const saveCroppedImage = async () => {
+    const croppedBlob = await getCroppedImg(selectedImage, croppedAreaPixels);
+    const croppedFile = new File([croppedBlob], "cropped.jpg", { type: "image/jpeg" });
+
+    const formData = new FormData();
+    formData.append("file", croppedFile);
+
+    try {
+      const uploadCardResponse = await fetch(`http://localhost:5000/upload_card_image/${username}`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (uploadCardResponse.ok) {
+        const data = await uploadCardResponse.json();
+        setMessage("Swipe photo uploaded successfully");
+
+        // ✅ odśwież dane profilu po przesłaniu zdjęcia
+        fetchProfileData();
+      } else {
+        setMessage("Failed to upload swipe photo");
+      }
+    } catch (error) {
+      setMessage("Error uploading swipe photo");
+    }
+
+    setShowCropModal(false);
+  };
 
   const HandleSubmit = async (e) => {
     e.preventDefault();
@@ -126,8 +183,6 @@ const LoggedHomePage = () => {
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
   const toggleChat = () => setChatVisible((prev) => !prev);
 
-  const [searchQuery, setSearchQuery] = useState("");
-
   return (
     <div className="logged-homepage">
       <nav className="navbar">
@@ -164,18 +219,6 @@ const LoggedHomePage = () => {
         </div>
       </nav>
 
-      <div className={`chat-panel ${chatVisible ? "visible" : ""}`}>
-        <div className="chat-header">
-          Czaty
-          <button onClick={toggleChat} style={{ cursor: "pointer" }}>X</button>
-        </div>
-        <div className="chat-content">
-          <p>Tu będzie czat...</p>
-        </div>
-      </div>
-
-      {sidebarOpen && <div className="backdrop active" onClick={toggleSidebar}></div>}
-
       <div className={`main-content ${sidebarOpen ? "active" : ""}`}>
         <h1 className="main-name">Profile</h1>
 
@@ -190,12 +233,14 @@ const LoggedHomePage = () => {
         </div>
       </div>
 
-      {/* ✅ NEW container centered for swipe photo */}
+      {/* ✅ NEW swipe photo container outside profile-info */}
       <div style={{
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        marginTop: "30px"
+        flexDirection: "column",
+        width: "100%",
+        marginTop: "50px"
       }}>
         {profile.card_image ? (
           <img
@@ -210,10 +255,32 @@ const LoggedHomePage = () => {
             }}
           />
         ) : (
-          <p style={{ color: "gray" }}>No swipe photo uploaded</p>
+          <p style={{ color: "gray", fontSize: "18px" }}>No swipe photo uploaded</p>
         )}
       </div>
 
+      {/* Crop modal overlay */}
+      {showCropModal && selectedImage && (
+        <div className="crop-modal">
+          <div className="crop-container">
+            <Cropper
+              image={selectedImage}
+              crop={crop}
+              zoom={zoom}
+              aspect={3 / 4}
+              onCropChange={setCrop}
+              onZoomChange={setZoom}
+              onCropComplete={onCropComplete}
+            />
+          </div>
+          <div className="crop-buttons">
+            <button onClick={saveCroppedImage}>OK</button>
+            <button onClick={() => setShowCropModal(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Profile Modal */}
       {showModal && (
         <div className="modal">
           <div className="modal-content">
@@ -251,8 +318,9 @@ const LoggedHomePage = () => {
               </div>
 
               <div className="card-image-upload" style={{ marginTop: 20 }}>
-                <label htmlFor="card-image-input" className="label">Add Swipe Photo</label>
-                <input type="file" accept="image/*" id="card-image-input" onChange={handleCardImageChange} />
+                <button type="button" onClick={openCropModal}>
+                  Add Swipe Photo
+                </button>
               </div>
 
               <div>
@@ -278,6 +346,14 @@ const LoggedHomePage = () => {
           </div>
         </div>
       )}
+
+      <input
+        type="file"
+        accept="image/*"
+        ref={fileInputRef}
+        style={{ display: "none" }}
+        onChange={handleFileSelectForCrop}
+      />
     </div>
   );
 };
