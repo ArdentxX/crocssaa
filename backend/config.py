@@ -1,6 +1,7 @@
 from flask import Flask ,session
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
+from flask_socketio import SocketIO
 from werkzeug.utils import secure_filename
 import os
 
@@ -20,3 +21,4 @@ app.config['SESSION_COOKIE_SECURE'] = False
 
 
 db = SQLAlchemy(app)
+socketio = SocketIO(app, cors_allowed_origins="*")

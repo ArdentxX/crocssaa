@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { io } from "socket.io-client";
 import "../css/loggedHomePage.css";
 
 const LoggedHomePage = () => {
@@ -17,11 +18,15 @@ const LoggedHomePage = () => {
   const [currentSwipeIndex, setCurrentSwipeIndex] = useState(0);
   const [swiping, setSwiping] = useState(false);
   const [swipeDirection, setSwipeDirection] = useState("");
+  const [chatMessages, setChatMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [matches, setMatches] = useState([]);
+  const [hasNewMatch, setHasNewMatch] = useState(false);
 
   const username = localStorage.getItem("username");
   const navigate = useNavigate();
+  const socketRef = useRef(null);
 
-  /* Load swipe index from localStorage on load */
   useEffect(() => {
     const savedIndex = parseInt(localStorage.getItem("swipeIndex"), 10);
     if (!isNaN(savedIndex)) {
@@ -32,6 +37,25 @@ const LoggedHomePage = () => {
   useEffect(() => {
     fetchProfileData();
     fetchSwipePhotos();
+  }, [username]);
+
+  useEffect(() => {
+    socketRef.current = io("http://localhost:5000");
+
+    socketRef.current.on("connect", () => {
+      socketRef.current.emit("register", { username });
+    });
+
+    socketRef.current.on("match-found", (data) => {
+      setChatVisible(true);
+      setChatMessages((prev) => [...prev, data.message]);
+      setMatches((prev) => [...new Set([...prev, data.with])]);
+      setHasNewMatch(true);
+    });
+
+    return () => {
+      socketRef.current.disconnect();
+    };
   }, [username]);
 
   const fetchProfileData = async () => {
@@ -59,7 +83,17 @@ const LoggedHomePage = () => {
   };
 
   const handleSwipe = (direction) => {
-    if (swiping || currentSwipeIndex >= swipePhotos.length) return; // ⬅️ fix: >= (nie -1)
+    if (swiping || currentSwipeIndex >= swipePhotos.length) return;
+    const target = swipePhotos[currentSwipeIndex]?.split(".")[0];
+
+    if (direction === "right") {
+      fetch("http://localhost:5000/swipe_right", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ from: username, to: target }),
+      });
+    }
+
     setSwipeDirection(direction);
     setSwiping(true);
     setTimeout(() => {
@@ -67,7 +101,7 @@ const LoggedHomePage = () => {
       setSwipeDirection("");
       setCurrentSwipeIndex((prev) => {
         const next = prev + 1;
-        localStorage.setItem("swipeIndex", next); // zapisz progres
+        localStorage.setItem("swipeIndex", next);
         return next;
       });
     }, 300);
@@ -134,6 +168,12 @@ const LoggedHomePage = () => {
   const toggleChat = () => setChatVisible((v) => !v);
   const handleSearch = () =>
     searchQuery.trim() && navigate(`/search_profiles?q=${searchQuery}`);
+  const sendMessage = () => {
+    if (newMessage.trim()) {
+      setChatMessages((prev) => [...prev, `${username}: ${newMessage}`]);
+      setNewMessage("");
+    }
+  };
 
   const currentSwipePhoto = swipePhotos[currentSwipeIndex];
 
@@ -160,7 +200,7 @@ const LoggedHomePage = () => {
         <div className="navbar-right">
           <button onClick={openModal}>Edit Profile</button>
           <button className="messages-button" onClick={toggleChat}>
-            Messages
+            Messages {hasNewMatch && <span className="notif-dot">●</span>}
           </button>
           {profile.profile_pic && (
             <img
@@ -172,15 +212,7 @@ const LoggedHomePage = () => {
         </div>
       </nav>
 
-      {/* Swipe area */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          marginTop: "50px",
-        }}
-      >
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: "50px" }}>
         {currentSwipePhoto ? (
           <div
             key={currentSwipeIndex}
@@ -189,13 +221,7 @@ const LoggedHomePage = () => {
             <img
               src={`http://localhost:5000/swipe_uploads/${currentSwipePhoto}?t=${Date.now()}`}
               alt="Swipe"
-              style={{
-                width: "600px",
-                height: "800px",
-                objectFit: "cover",
-                borderRadius: "8px",
-                border: "2px solid #ccc",
-              }}
+              style={{ width: "600px", height: "800px", objectFit: "cover", borderRadius: "8px", border: "2px solid #ccc" }}
             />
           </div>
         ) : (
@@ -216,7 +242,6 @@ const LoggedHomePage = () => {
         )}
       </div>
 
-      {/* Modal */}
       {showModal && (
         <div className="modal">
           <div className="modal-content">
@@ -225,22 +250,16 @@ const LoggedHomePage = () => {
             <form onSubmit={HandleSubmit}>
               <label className="label">First Name</label>
               <input className="input-field" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
-
               <label className="label">Last Name</label>
               <input className="input-field" value={lastName} onChange={(e) => setLastName(e.target.value)} />
-
               <label className="label">Location</label>
               <input className="input-field" value={location} onChange={(e) => setLocation(e.target.value)} />
-
               <label className="label">Hobbies</label>
               <input className="input-field" value={hobbys} onChange={(e) => setHobbys(e.target.value)} />
-
               <label className="label">Profile Picture</label>
               <input type="file" onChange={handleProfilePicChange} />
-
               <label className="label">Swipe Photo</label>
               <input type="file" onChange={(e) => setCardImageFile(e.target.files[0])} />
-
               <div style={{ display: "flex", justifyContent: "center" }}>
                 <button type="submit" className="submit-button">Save</button>
                 <button type="button" className="cancel-button" onClick={closeModal}>Cancel</button>
@@ -250,7 +269,6 @@ const LoggedHomePage = () => {
         </div>
       )}
 
-      {/* Chat */}
       {chatVisible && (
         <div className="chat-panel visible">
           <div className="chat-header">
@@ -258,8 +276,33 @@ const LoggedHomePage = () => {
             <span onClick={toggleChat} style={{ cursor: "pointer" }}>×</span>
           </div>
           <div className="chat-content">
-            <p>Przykładowa wiadomość</p>
+            {chatMessages.length > 0 ? (
+              chatMessages.map((msg, i) => <p key={i}>{msg}</p>)
+            ) : (
+              <p>Brak wiadomości</p>
+            )}
           </div>
+          <div style={{ display: "flex", padding: "10px" }}>
+            <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder="Napisz coś..."
+              style={{ flex: 1, marginRight: "10px" }}
+            />
+            <button onClick={sendMessage}>Wyślij</button>
+          </div>
+        </div>
+      )}
+
+      {matches.length > 0 && (
+        <div className="match-list">
+          <h3>Twoje matche:</h3>
+          <ul>
+            {matches.map((m, i) => (
+              <li key={i}>{m}</li>
+            ))}
+          </ul>
         </div>
       )}
     </div>
