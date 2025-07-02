@@ -319,6 +319,30 @@ def all_card_images():
 
     return jsonify({"photos": photos})
 
+# wiadomosci miedzy userami
+@app.route("/api/messages/<user1>/<user2>", methods=["GET"])
+def get_messages(user1, user2):
+    u1 = User.query.filter_by(username=user1).first()
+    u2 = User.query.filter_by(username=user2).first()
+
+    if not u1 or not u2:
+        return jsonify({"messages": []})
+
+    msgs = Message.query.filter(
+        ((Message.sender_id == u1.id) & (Message.receiver_id == u2.id)) |
+        ((Message.sender_id == u2.id) & (Message.receiver_id == u1.id))
+    ).order_by(Message.id.asc()).all()
+
+    message_list = [
+        {
+            "from": m.sender_id == u1.id and user1 or user2,
+            "message": m.content
+        } for m in msgs
+    ]
+
+    return jsonify({"messages": message_list})
+
+
 # === URUCHOMIENIE ===
 if __name__ == "__main__":
     with app.app_context():

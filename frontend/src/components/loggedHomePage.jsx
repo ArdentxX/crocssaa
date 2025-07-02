@@ -34,7 +34,7 @@ const LoggedHomePage = () => {
   useEffect(() => {
     fetchProfileData();
     fetchSwipePhotos();
-    fetchMatches(); // pobierz match przy starcie
+    fetchMatches();
   }, [username]);
 
   useEffect(() => {
@@ -63,6 +63,24 @@ const LoggedHomePage = () => {
       socketRef.current.disconnect();
     };
   }, [username]);
+
+  // 🔥 ZAŁADUJ HISTORIĘ wiadomości po zmianie rozmówcy
+  useEffect(() => {
+    const loadChatHistory = async () => {
+      if (!activeChatUser) return;
+      try {
+        const res = await fetch(`http://localhost:5000/api/messages/${username}/${activeChatUser}`);
+        if (res.ok) {
+          const data = await res.json();
+          const msgs = data.messages.map((m) => `${m.from}: ${m.message}`);
+          setChatMessages(msgs);
+        }
+      } catch (err) {
+        console.error("Błąd przy ładowaniu historii wiadomości:", err);
+      }
+    };
+    loadChatHistory();
+  }, [activeChatUser]);
 
   const fetchProfileData = async () => {
     try {
@@ -93,7 +111,7 @@ const LoggedHomePage = () => {
       const res = await fetch(`http://localhost:5000/api/matches/${username}`);
       if (res.ok) {
         const data = await res.json();
-        setMatches(data.matches.map(m => m.username) || []);
+        setMatches(data.matches.map((m) => m.username) || []);
       }
     } catch (err) {
       console.error("Błąd przy pobieraniu matchy:", err);
@@ -110,13 +128,9 @@ const LoggedHomePage = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ from: username, to: target }),
       });
-      // 🔥 Po swipe sprawdz bazę czy utworzyl sie match
       if (res.ok) {
         const data = await res.json();
-        if (data.match) {
-          // Odśwież matche z bazy
-          fetchMatches();
-        }
+        if (data.match) fetchMatches();
       }
     }
 
@@ -127,6 +141,45 @@ const LoggedHomePage = () => {
       setSwipeDirection("");
       setCurrentSwipeIndex((prev) => prev + 1);
     }, 300);
+  };
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+
+    try {
+      const res = await fetch(`http://localhost:5000/search_profiles?q=${searchQuery}`, {
+        headers: { username },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const found = data.profiles[0];
+
+        if (found && found.match) {
+          if (!matches.includes(found.username)) {
+            setMatches((prev) => [...prev, found.username]);
+          }
+          setActiveChatUser(found.username);
+          setChatVisible(true);
+        } else {
+          alert("Nie masz jeszcze matcha z tym użytkownikiem.");
+        }
+      }
+    } catch (err) {
+      console.error("Błąd podczas wyszukiwania:", err);
+    }
+  };
+
+  const sendMessage = () => {
+    if (newMessage.trim() && activeChatUser) {
+      socketRef.current.emit("send-message", {
+        from: username,
+        to: activeChatUser,
+        message: newMessage,
+      });
+      setChatMessages((prev) => [...prev, `${username}: ${newMessage}`]);
+      setNewMessage("");
+    }
   };
 
   const handleProfilePicChange = (e) => setProfilePic(e.target.files[0]);
@@ -188,46 +241,7 @@ const LoggedHomePage = () => {
 
   const closeModal = () => setShowModal(false);
   const toggleChat = () => setChatVisible((v) => !v);
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
-
-    try {
-      const res = await fetch(`http://localhost:5000/search_profiles?q=${searchQuery}`, {
-        headers: { username },
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        const found = data.profiles[0];
-
-        if (found && found.match) {
-          if (!matches.includes(found.username)) {
-            setMatches((prev) => [...prev, found.username]);
-          }
-          setActiveChatUser(found.username);
-          setChatVisible(true);
-        } else {
-          alert("Nie masz jeszcze matcha z tym użytkownikiem.");
-        }
-      }
-    } catch (err) {
-      console.error("Błąd podczas wyszukiwania:", err);
-    }
-  };
-  const sendMessage = () => {
-    if (newMessage.trim() && activeChatUser) {
-      socketRef.current.emit("send-message", {
-        from: username,
-        to: activeChatUser,
-        message: newMessage,
-      });
-      setChatMessages((prev) => [...prev, `${username}: ${newMessage}`]);
-      setNewMessage("");
-    }
-  };
-
   const currentSwipePhoto = swipePhotos[currentSwipeIndex];
-
   return (
     <div className="logged-homepage">
       <nav className="navbar">
