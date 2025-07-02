@@ -22,17 +22,11 @@ const LoggedHomePage = () => {
   const [newMessage, setNewMessage] = useState("");
   const [matches, setMatches] = useState([]);
   const [hasNewMatch, setHasNewMatch] = useState(false);
+  const [activeChatUser, setActiveChatUser] = useState(null);
 
   const username = localStorage.getItem("username");
   const navigate = useNavigate();
   const socketRef = useRef(null);
-
-  useEffect(() => {
-    const savedIndex = parseInt(localStorage.getItem("swipeIndex"), 10);
-    if (!isNaN(savedIndex)) {
-      setCurrentSwipeIndex(savedIndex);
-    }
-  }, []);
 
   useEffect(() => {
     fetchProfileData();
@@ -47,10 +41,12 @@ const LoggedHomePage = () => {
     });
 
     socketRef.current.on("match-found", (data) => {
-      setChatVisible(true);
-      setChatMessages((prev) => [...prev, data.message]);
       setMatches((prev) => [...new Set([...prev, data.with])]);
       setHasNewMatch(true);
+    });
+
+    socketRef.current.on("receive-message", (data) => {
+      setChatMessages((prev) => [...prev, `${data.from}: ${data.message}`]);
     });
 
     return () => {
@@ -99,11 +95,7 @@ const LoggedHomePage = () => {
     setTimeout(() => {
       setSwiping(false);
       setSwipeDirection("");
-      setCurrentSwipeIndex((prev) => {
-        const next = prev + 1;
-        localStorage.setItem("swipeIndex", next);
-        return next;
-      });
+      setCurrentSwipeIndex((prev) => prev + 1);
     }, 300);
   };
 
@@ -168,8 +160,14 @@ const LoggedHomePage = () => {
   const toggleChat = () => setChatVisible((v) => !v);
   const handleSearch = () =>
     searchQuery.trim() && navigate(`/search_profiles?q=${searchQuery}`);
+
   const sendMessage = () => {
-    if (newMessage.trim()) {
+    if (newMessage.trim() && activeChatUser) {
+      socketRef.current.emit("send-message", {
+        from: username,
+        to: activeChatUser,
+        message: newMessage,
+      });
       setChatMessages((prev) => [...prev, `${username}: ${newMessage}`]);
       setNewMessage("");
     }
@@ -272,7 +270,12 @@ const LoggedHomePage = () => {
       {chatVisible && (
         <div className="chat-panel visible">
           <div className="chat-header">
-            Chat
+            <select onChange={(e) => setActiveChatUser(e.target.value)}>
+              <option value="">-- wybierz rozmówcę --</option>
+              {matches.map((m, i) => (
+                <option key={i} value={m}>{m}</option>
+              ))}
+            </select>
             <span onClick={toggleChat} style={{ cursor: "pointer" }}>×</span>
           </div>
           <div className="chat-content">

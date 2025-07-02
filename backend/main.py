@@ -1,69 +1,103 @@
-from flask import Flask, request, jsonify, session, send_from_directory
+from flask import request, jsonify, session, send_from_directory
 from config import app, db, socketio
-from models import User, Personal_Data
+from flask_socketio import emit
+from models import User, Personal_Data, Swipe, Match, Message
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-from flask_socketio import emit
 import os
 
-# --- SWIPE & SOCKET MEMORY ---
-swipes = {}  # {'userA': ['userB']}
-matches = set()  # {('userA', 'userB')}
-connected_users = {}  # {'username': socket_id}
+# ===== SWIPE SYSTEM & SOCKET =====
+connected_users = {}
 
-# --- KONFIGURACJA UPLOADÓW ---
+@socketio.on("connect")
+def on_connect():
+    print("Użytkownik połączony przez socket")
+
+@socketio.on("register")
+def handle_register(data):
+    username = data.get("username")
+    if username:
+        connected_users[username] = request.sid
+        print(f"{username} połączony z SID {request.sid}")
+
+@socketio.on("disconnect")
+def handle_disconnect():
+    for user, sid in list(connected_users.items()):
+        if sid == request.sid:
+            del connected_users[user]
+            print(f"{user} rozłączony")
+            break
+
+@socketio.on("send-message")
+def handle_send_message(data):
+    sender_name = data.get("from")
+    receiver_name = data.get("to")
+    content = data.get("message")
+
+    sender = User.query.filter_by(username=sender_name).first()
+    receiver = User.query.filter_by(username=receiver_name).first()
+
+    if not sender or not receiver or not content:
+        return
+
+    msg = Message(sender_id=sender.id, receiver_id=receiver.id, content=content)
+    db.session.add(msg)
+    db.session.commit()
+
+    sid = connected_users.get(receiver_name)
+    if sid:
+        emit("receive-message", {"from": sender_name, "message": content}, to=sid)
+
+@app.route("/swipe_right", methods=["POST"])
+def swipe_right():
+    data = request.get_json()
+    swiper_name = data.get("from")
+    target_name = data.get("to")
+
+    if not swiper_name or not target_name:
+        return jsonify({"error": "Missing usernames"}), 400
+
+    swiper = User.query.filter_by(username=swiper_name).first()
+    target = User.query.filter_by(username=target_name).first()
+    if not swiper or not target:
+        return jsonify({"error": "User not found"}), 404
+
+    existing_swipe = Swipe.query.filter_by(swiper_id=swiper.id, target_id=target.id).first()
+    if not existing_swipe:
+        new_swipe = Swipe(swiper_id=swiper.id, target_id=target.id)
+        db.session.add(new_swipe)
+        db.session.commit()
+
+    reverse_swipe = Swipe.query.filter_by(swiper_id=target.id, target_id=swiper.id).first()
+    if reverse_swipe:
+        existing_match = Match.query.filter(
+            ((Match.user1_id == swiper.id) & (Match.user2_id == target.id)) |
+            ((Match.user1_id == target.id) & (Match.user2_id == swiper.id))
+        ).first()
+
+        if not existing_match:
+            new_match = Match(user1_id=swiper.id, user2_id=target.id)
+            db.session.add(new_match)
+            db.session.commit()
+
+        for user in [swiper.username, target.username]:
+            sid = connected_users.get(user)
+            if sid:
+                emit("match-found", {
+                    "with": target.username if user == swiper.username else swiper.username,
+                    "message": "Chyba znalezlismy pare do twojego crocsa"
+                }, to=sid)
+        return jsonify({"match": True})
+
+    return jsonify({"match": False})
+
+# ===== KONFIGURACJA UPLOADÓW =====
 app.config['UPLOAD_FOLDER_PROFILE'] = os.path.join(os.getcwd(), 'uploads')
 app.config['UPLOAD_FOLDER_CARD'] = os.path.join(os.getcwd(), 'swipe_uploads')
 os.makedirs(app.config['UPLOAD_FOLDER_PROFILE'], exist_ok=True)
 os.makedirs(app.config['UPLOAD_FOLDER_CARD'], exist_ok=True)
 
-# --- SWIPE API (MATCH + EMIT) ---
-@app.route("/swipe_right", methods=["POST"])
-def swipe_right():
-    data = request.get_json()
-    swiper = data.get("from")
-    target = data.get("to")
-
-    if not swiper or not target:
-        return jsonify({"error": "Missing usernames"}), 400
-
-    swipes.setdefault(swiper, []).append(target)
-
-    if swiper in swipes.get(target, []):
-        pair = tuple(sorted((swiper, target)))
-        if pair not in matches:
-            matches.add(pair)
-            for user in pair:
-                sid = connected_users.get(user)
-                if sid:
-                    socketio.emit("match-found", {
-                        "with": target if user == swiper else swiper,
-                        "message": "Chyba znalezlismy pare do twojego crocsa"
-                    }, to=sid)
-        return jsonify({"match": True})
-    return jsonify({"match": False})
-
-# --- SOCKETIO HANDLERS ---
-@socketio.on("connect")
-def on_connect():
-    print("Socket connected")
-
-@socketio.on("register")
-def register_user(data):
-    username = data.get("username")
-    if username:
-        connected_users[username] = request.sid
-        print(f"{username} registered with SID {request.sid}")
-
-@socketio.on("disconnect")
-def on_disconnect():
-    for user, sid in list(connected_users.items()):
-        if sid == request.sid:
-            print(f"{user} disconnected")
-            del connected_users[user]
-            break
-
-# --- POZOSTAŁE ROUTES (bez zmian) ---
+# ===== POZOSTAŁE ENDPOINTY =====
 @app.route("/api/register", methods=["POST"])
 def register():
     data = request.get_json()
@@ -75,7 +109,7 @@ def register():
     if User.query.filter_by(username=username).first():
         return jsonify({"Message": "User already exist"}), 400
 
-    hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+    hashed_password = generate_password_hash(password)
     new_user = User(username=username, password=hashed_password, email=email)
     db.session.add(new_user)
     db.session.commit()
@@ -143,7 +177,6 @@ def update_profile(username):
 def upload_pic(username):
     if 'file' not in request.files:
         return jsonify({'message': "No selected file"}), 400
-
     file = request.files['file']
     if file.filename == '':
         return jsonify({'message': "No selected file"}), 400
@@ -169,7 +202,6 @@ def upload_pic(username):
 def upload_card_image(username):
     if 'file' not in request.files:
         return jsonify({'message': "No selected file"}), 400
-
     file = request.files['file']
     if file.filename == '':
         return jsonify({'message': "No selected file"}), 400
@@ -204,16 +236,11 @@ def search_profile():
     query = request.args.get('q')
     if not query:
         return jsonify({"profiles": []})
-
     profiles = db.session.query(Personal_Data, User).join(User).filter(
         Personal_Data.last_name.ilike(f'%{query}%')
     ).all()
-
-    results = [{
-        "username": user.username,
-        "profile_pic": personal.profile_pic
-    } for personal, user in profiles]
-
+    results = [{"username": user.username, "profile_pic": personal.profile_pic}
+               for personal, user in profiles]
     return jsonify({"profiles": results})
 
 @app.route('/all_card_images')
@@ -223,16 +250,20 @@ def all_card_images():
     if not current_user:
         return jsonify({"photos": []})
 
-    photos_query = Personal_Data.query.filter(
+    swiped = db.session.query(Swipe.target_id).filter_by(swiper_id=current_user.id).subquery()
+
+    profiles = Personal_Data.query.filter(
         Personal_Data.user_id != current_user.id,
-        Personal_Data.card_image != None
+        Personal_Data.card_image != None,
+        ~Personal_Data.user_id.in_(swiped)
     ).all()
 
-    photos = [p.card_image for p in photos_query]
+    photos = [p.card_image for p in profiles]
     return jsonify({"photos": photos})
 
-# === Start app with SocketIO ===
+# === URUCHOMIENIE ===
 if __name__ == "__main__":
     with app.app_context():
+        db.drop_all()
         db.create_all()
     socketio.run(app, debug=True)

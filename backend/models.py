@@ -9,6 +9,23 @@ class User(db.Model):
     personal_data = db.relationship('Personal_Data' , back_populates='user' , uselist=False)
 
 
+class Swipe(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    swiper_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    target_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+class Match(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user1_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user2_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+class Message(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+
+
 class Personal_Data(db.Model):
     id = db.Column(db.INTEGER, primary_key = True)
     first_name = db.Column(db.String(80) , nullable=True)
