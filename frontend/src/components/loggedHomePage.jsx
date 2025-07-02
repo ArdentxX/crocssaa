@@ -14,7 +14,7 @@ const LoggedHomePage = () => {
   const [cardImageFile, setCardImageFile] = useState(null);
   const [profile, setProfile] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
-  const [swipePhotos, setSwipePhotos] = useState([]);
+  const [swipePhotos, setSwipePhotos] = useState([]); // 🔥 MOD: teraz tablica obiektów { username, card_image }
   const [currentSwipeIndex, setCurrentSwipeIndex] = useState(0);
   const [swiping, setSwiping] = useState(false);
   const [swipeDirection, setSwipeDirection] = useState("");
@@ -73,14 +73,14 @@ const LoggedHomePage = () => {
       });
       if (res.ok) {
         const data = await res.json();
-        setSwipePhotos(data.photos);
+        setSwipePhotos(data.photos); // 🔥 MOD: zapisuj obiekty z backendu
       }
     } catch {}
   };
 
   const handleSwipe = (direction) => {
     if (swiping || currentSwipeIndex >= swipePhotos.length) return;
-    const target = swipePhotos[currentSwipeIndex]?.split(".")[0];
+    const target = swipePhotos[currentSwipeIndex]?.username; // 🔥 MOD: teraz username zamiast nazwy pliku
 
     if (direction === "right") {
       fetch("http://localhost:5000/swipe_right", {
@@ -217,7 +217,7 @@ const LoggedHomePage = () => {
             className={`swipe-card ${swiping ? `swipe-${swipeDirection}` : ""}`}
           >
             <img
-              src={`http://localhost:5000/swipe_uploads/${currentSwipePhoto}?t=${Date.now()}`}
+              src={`http://localhost:5000/swipe_uploads/${currentSwipePhoto.card_image}?t=${Date.now()}`} // 🔥 MOD: card_image z obiektu
               alt="Swipe"
               style={{ width: "600px", height: "800px", objectFit: "cover", borderRadius: "8px", border: "2px solid #ccc" }}
             />

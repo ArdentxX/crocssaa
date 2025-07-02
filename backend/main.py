@@ -258,7 +258,11 @@ def all_card_images():
         ~Personal_Data.user_id.in_(swiped)
     ).all()
 
-    photos = [p.card_image for p in profiles]
+    photos = [{
+        "username": p.user.username,
+        "card_image": p.card_image
+    } for p in profiles]
+
     return jsonify({"photos": photos})
 
 # === URUCHOMIENIE ===
