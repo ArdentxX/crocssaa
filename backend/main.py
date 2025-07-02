@@ -62,35 +62,41 @@ def swipe_right():
     if not swiper or not target:
         return jsonify({"error": "User not found"}), 404
 
+    # Zapisz swipe tylko jeśli jeszcze go nie ma
     existing_swipe = Swipe.query.filter_by(swiper_id=swiper.id, target_id=target.id).first()
     if not existing_swipe:
         new_swipe = Swipe(swiper_id=swiper.id, target_id=target.id)
         db.session.add(new_swipe)
         db.session.commit()
 
+    # Sprawdź, czy druga osoba też zrobiła swipe na tego użytkownika
     reverse_swipe = Swipe.query.filter_by(swiper_id=target.id, target_id=swiper.id).first()
     if reverse_swipe:
+        # Sprawdź, czy match już istnieje
         existing_match = Match.query.filter(
             ((Match.user1_id == swiper.id) & (Match.user2_id == target.id)) |
             ((Match.user1_id == target.id) & (Match.user2_id == swiper.id))
         ).first()
 
         if not existing_match:
-            new_match = Match(user1_id=swiper.id, user2_id=target.id)
+            new_match = Match(user1_id=min(swiper.id, target.id), user2_id=max(swiper.id, target.id))
             db.session.add(new_match)
             db.session.commit()
 
-        for user in [swiper.username, target.username]:
-            sid = connected_users.get(user)
-            if sid:
-                emit("match-found", {
-                    "with": target.username if user == swiper.username else swiper.username,
-                    "message": "Chyba znalezlismy pare do twojego crocsa",
-                    "is_initiator": user == swiper.username  # 🔥 dodaj info kto jest inicjatorem swipe
-                }, to=sid)
+            # Emituj do obydwu użytkowników
+            for user in [swiper.username, target.username]:
+                sid = connected_users.get(user)
+                if sid:
+                    emit("match-found", {
+                        "with": target.username if user == swiper.username else swiper.username,
+                        "message": "Chyba znalezlismy pare do twojego crocsa",
+                        "is_initiator": user == swiper.username
+                    }, to=sid)
+
         return jsonify({"match": True})
 
     return jsonify({"match": False})
+
 
 # ===== KONFIGURACJA UPLOADÓW =====
 app.config['UPLOAD_FOLDER_PROFILE'] = os.path.join(os.getcwd(), 'uploads')
