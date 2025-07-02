@@ -268,13 +268,33 @@ def get_user_matches(username):
 @app.route('/search_profiles', methods=['GET'])
 def search_profile():
     query = request.args.get('q')
-    if not query:
+    username = request.headers.get('username')
+
+    current_user = User.query.filter_by(username=username).first()
+    if not current_user or not query:
         return jsonify({"profiles": []})
+
     profiles = db.session.query(Personal_Data, User).join(User).filter(
-        Personal_Data.last_name.ilike(f'%{query}%')
+        Personal_Data.last_name.ilike(f'%{query}%') |
+        User.username.ilike(f'%{query}%')
     ).all()
-    results = [{"username": user.username, "profile_pic": personal.profile_pic}
-               for personal, user in profiles]
+
+    results = []
+    for personal, user in profiles:
+        if user.id == current_user.id:
+            continue
+
+        matched = Match.query.filter(
+            ((Match.user1_id == current_user.id) & (Match.user2_id == user.id)) |
+            ((Match.user1_id == user.id) & (Match.user2_id == current_user.id))
+        ).first() is not None
+
+        results.append({
+            "username": user.username,
+            "profile_pic": personal.profile_pic,
+            "match": matched
+        })
+
     return jsonify({"profiles": results})
 
 @app.route('/all_card_images')

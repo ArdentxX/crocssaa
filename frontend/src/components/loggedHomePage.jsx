@@ -188,9 +188,32 @@ const LoggedHomePage = () => {
 
   const closeModal = () => setShowModal(false);
   const toggleChat = () => setChatVisible((v) => !v);
-  const handleSearch = () =>
-    searchQuery.trim() && navigate(`/search_profiles?q=${searchQuery}`);
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
 
+    try {
+      const res = await fetch(`http://localhost:5000/search_profiles?q=${searchQuery}`, {
+        headers: { username },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const found = data.profiles[0];
+
+        if (found && found.match) {
+          if (!matches.includes(found.username)) {
+            setMatches((prev) => [...prev, found.username]);
+          }
+          setActiveChatUser(found.username);
+          setChatVisible(true);
+        } else {
+          alert("Nie masz jeszcze matcha z tym użytkownikiem.");
+        }
+      }
+    } catch (err) {
+      console.error("Błąd podczas wyszukiwania:", err);
+    }
+  };
   const sendMessage = () => {
     if (newMessage.trim() && activeChatUser) {
       socketRef.current.emit("send-message", {
