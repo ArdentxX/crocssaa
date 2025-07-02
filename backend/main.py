@@ -85,7 +85,8 @@ def swipe_right():
             if sid:
                 emit("match-found", {
                     "with": target.username if user == swiper.username else swiper.username,
-                    "message": "Chyba znalezlismy pare do twojego crocsa"
+                    "message": "Chyba znalezlismy pare do twojego crocsa",
+                    "is_initiator": user == swiper.username  # 🔥 dodaj info kto jest inicjatorem swipe
                 }, to=sid)
         return jsonify({"match": True})
 
@@ -230,6 +231,33 @@ def uploaded_profile_pic(filename):
 @app.route('/swipe_uploads/<filename>')
 def uploaded_card_image(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER_CARD'], filename)
+@app.route('/api/matches/<username>', methods=['GET'])
+def get_user_matches(username):
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return jsonify({'matches': []})
+
+    # Pobierz wszystkie matche gdzie user jest user1 lub user2
+    user_matches = Match.query.filter(
+        (Match.user1_id == user.id) | (Match.user2_id == user.id)
+    ).all()
+
+    matches_list = []
+    for match in user_matches:
+        matched_user_id = match.user2_id if match.user1_id == user.id else match.user1_id
+        matched_user = User.query.filter_by(id=matched_user_id).first()
+        if matched_user:
+            # Pobierz personal data (dla zdjęcia profilowego, jeśli chcesz)
+            personal = matched_user.personal_data
+            matches_list.append({
+                'username': matched_user.username,
+                'first_name': personal.first_name if personal else '',
+                'last_name': personal.last_name if personal else '',
+                'profile_pic': personal.profile_pic if personal else '',
+                'message': f'Masz nowy match z {matched_user.username}'
+            })
+
+    return jsonify({'matches': matches_list})
 
 @app.route('/search_profiles', methods=['GET'])
 def search_profile():

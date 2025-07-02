@@ -14,7 +14,7 @@ const LoggedHomePage = () => {
   const [cardImageFile, setCardImageFile] = useState(null);
   const [profile, setProfile] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
-  const [swipePhotos, setSwipePhotos] = useState([]); // 🔥 MOD: teraz tablica obiektów { username, card_image }
+  const [swipePhotos, setSwipePhotos] = useState([]);
   const [currentSwipeIndex, setCurrentSwipeIndex] = useState(0);
   const [swiping, setSwiping] = useState(false);
   const [swipeDirection, setSwipeDirection] = useState("");
@@ -24,6 +24,9 @@ const LoggedHomePage = () => {
   const [hasNewMatch, setHasNewMatch] = useState(false);
   const [activeChatUser, setActiveChatUser] = useState(null);
 
+  const [showMatchModal, setShowMatchModal] = useState(false);
+  const [matchedUser, setMatchedUser] = useState(null);
+
   const username = localStorage.getItem("username");
   const navigate = useNavigate();
   const socketRef = useRef(null);
@@ -31,6 +34,7 @@ const LoggedHomePage = () => {
   useEffect(() => {
     fetchProfileData();
     fetchSwipePhotos();
+    fetchMatches(); // pobierz match przy starcie
   }, [username]);
 
   useEffect(() => {
@@ -42,7 +46,13 @@ const LoggedHomePage = () => {
 
     socketRef.current.on("match-found", (data) => {
       setMatches((prev) => [...new Set([...prev, data.with])]);
-      setHasNewMatch(true);
+
+      if (data.is_initiator) {
+        setHasNewMatch(true);
+      } else {
+        setMatchedUser(data.with);
+        setShowMatchModal(true);
+      }
     });
 
     socketRef.current.on("receive-message", (data) => {
@@ -73,21 +83,41 @@ const LoggedHomePage = () => {
       });
       if (res.ok) {
         const data = await res.json();
-        setSwipePhotos(data.photos); // 🔥 MOD: zapisuj obiekty z backendu
+        setSwipePhotos(data.photos);
       }
     } catch {}
   };
 
-  const handleSwipe = (direction) => {
+  const fetchMatches = async () => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/matches/${username}`);
+      if (res.ok) {
+        const data = await res.json();
+        setMatches(data.matches.map(m => m.username) || []);
+      }
+    } catch (err) {
+      console.error("Błąd przy pobieraniu matchy:", err);
+    }
+  };
+
+  const handleSwipe = async (direction) => {
     if (swiping || currentSwipeIndex >= swipePhotos.length) return;
-    const target = swipePhotos[currentSwipeIndex]?.username; // 🔥 MOD: teraz username zamiast nazwy pliku
+    const target = swipePhotos[currentSwipeIndex]?.username;
 
     if (direction === "right") {
-      fetch("http://localhost:5000/swipe_right", {
+      const res = await fetch("http://localhost:5000/swipe_right", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ from: username, to: target }),
       });
+      // 🔥 Po swipe sprawdz bazę czy utworzyl sie match
+      if (res.ok) {
+        const data = await res.json();
+        if (data.match) {
+          // Odśwież matche z bazy
+          fetchMatches();
+        }
+      }
     }
 
     setSwipeDirection(direction);
@@ -217,7 +247,7 @@ const LoggedHomePage = () => {
             className={`swipe-card ${swiping ? `swipe-${swipeDirection}` : ""}`}
           >
             <img
-              src={`http://localhost:5000/swipe_uploads/${currentSwipePhoto.card_image}?t=${Date.now()}`} // 🔥 MOD: card_image z obiektu
+              src={`http://localhost:5000/swipe_uploads/${currentSwipePhoto.card_image}?t=${Date.now()}`}
               alt="Swipe"
               style={{ width: "600px", height: "800px", objectFit: "cover", borderRadius: "8px", border: "2px solid #ccc" }}
             />
@@ -306,6 +336,16 @@ const LoggedHomePage = () => {
               <li key={i}>{m}</li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {showMatchModal && (
+        <div className="match-modal">
+          <div className="modal-content">
+            <h2>🎉 Masz nowy match!</h2>
+            <p>Jesteś sparowany z {matchedUser}</p>
+            <button onClick={() => setShowMatchModal(false)}>Zamknij</button>
+          </div>
         </div>
       )}
     </div>
