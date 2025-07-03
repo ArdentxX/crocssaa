@@ -36,7 +36,6 @@
 - Wylogowanie z przyciskiem, który przekierowuje na stronę główną
 
 ---
-
 ## Tech Stack
 
 - **Frontend:**
@@ -58,7 +57,23 @@
   - Automatyczne połączenia z socketem po zalogowaniu
 
 ---
+## Uruchamianie aplikacji
+```
+cd frontend
+npm install 
+npm run dev
+```
 
+```
+cd backend
+python -m venv venv
+source venv/bin/activate  # lub venv\\Scripts\\activate na Windows
+pip install -r requirements.txt
+python main.py
+```
+
+
+---
 ## Autorzy
 
 - **Kinga Surma** 
