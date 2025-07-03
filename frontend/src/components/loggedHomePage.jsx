@@ -226,9 +226,15 @@ const LoggedHomePage = () => {
 
   const closeModal = () => setShowModal(false);
   const toggleChat = () => {
-    setChatVisible((v) => !v);
-    setHasNewMessage(false);
-  };
+  setChatVisible((v) => !v);
+  setHasNewMessage(false);
+
+  if (!chatVisible) {
+    // Czat właśnie został otwarty
+    setActiveChatUser(null);
+    setChatMessages([]); // wyczyść poprzednią historię
+  }
+};
 
   const logout = async () => {
     await fetch("http://localhost:5000/api/logout", { method: "POST" });
@@ -317,97 +323,104 @@ const LoggedHomePage = () => {
       )}
 
       {chatVisible && (
-        <div className="chat-panel visible">
-          <div className="chat-header">
-            <select onChange={(e) => setActiveChatUser(e.target.value)}>
-              <option value="">-- wybierz rozmówcę --</option>
-              {matches.map((m, i) => (
-                <option key={i} value={m}>{m}</option>
-              ))}
-            </select>
-            <span onClick={toggleChat} style={{ cursor: "pointer" }}>×</span>
-          </div>
-          <div className="chat-content">
-            {chatMessages.length > 0 ? (
-              chatMessages.map((msg, i) => {
-                const [from, ...rest] = msg.split(": ");
-                const message = rest.join(": ");
-                const isOwn = from === username;
-                return (
-                  <div
-                    key={i}
-                    style={{
-                      display: "flex",
-                      justifyContent: isOwn ? "flex-end" : "flex-start",
-                      marginBottom: "4px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        background: isOwn ? "#c967ff" : "#eee",
-                        padding: "8px 12px",
-                        borderRadius: "16px",
-                        maxWidth: "60%",
-                        wordBreak: "break-word",
-                      }}
-                    >
-                      <strong>{from}</strong>: {message}
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <p>Brak wiadomości</p>
-            )}
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", padding: "10px" }}>
-            <div style={{ display: "flex", alignItems: "center" }}>
-              <input
-                type="text"
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Napisz coś..."
-                style={{ flex: 1, marginRight: "10px" }}
-              />
-              <button onClick={sendMessage}>Wyślij</button>
-              <button
-                onClick={() => setShowEmojiPicker((prev) => !prev)}
-                style={{ marginLeft: "5px" }}
-              >
-                🙂
-              </button>
+          <div className="chat-panel visible">
+            <div className="chat-header">
+              <select onChange={(e) => setActiveChatUser(e.target.value)}>
+                <option value="">-- wybierz rozmówcę --</option>
+                {matches.map((m, i) => (
+                    <option key={i} value={m}>{m}</option>
+                ))}
+              </select>
+              <span onClick={toggleChat} style={{cursor: "pointer"}}>×</span>
             </div>
-            {showEmojiPicker && (
-              <div style={{ marginTop: "10px" }}>
-                <Picker
-                  data={data}
-                  onEmojiSelect={(emoji) => setNewMessage((prev) => prev + emoji.native)}
-                  locale="pl"
-                  previewPosition="none"
+            <div className="chat-content">
+              {activeChatUser ? (
+                  chatMessages.length > 0 ? (
+                      chatMessages.map((msg, i) => {
+                        const [from, ...rest] = msg.split(": ");
+                        const message = rest.join(": ");
+                        const isOwn = from === username;
+                        return (
+                            <div
+                                key={i}
+                                style={{
+                                  display: "flex",
+                                  justifyContent: isOwn ? "flex-end" : "flex-start",
+                                  marginBottom: "4px",
+                                }}
+                            >
+                              <div
+                                  style={{
+                                    background: isOwn ? "#c967ff" : "#eee",
+                                    padding: "8px 12px",
+                                    borderRadius: "16px",
+                                    maxWidth: "60%",
+                                    wordBreak: "break-word",
+                                  }}
+                              >
+                                <strong>{from}</strong>: {message}
+                              </div>
+                            </div>
+                        );
+                      })
+                  ) : (
+                      <p>Brak wiadomości</p>
+                  )
+              ) : (
+                  <p style={{color: "#888", fontStyle: "italic", padding: "10px"}}>
+                    Wybierz rozmówcę, aby rozpocząć czat.
+                  </p>
+              )}
+            </div>
+
+            <div style={{display: "flex", flexDirection: "column", padding: "10px"}}>
+              <div style={{display: "flex", alignItems: "center"}}>
+                <input
+                    type="text"
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder="Napisz coś..."
+                    style={{flex: 1, marginRight: "10px"}}
                 />
+                <button onClick={sendMessage}>Wyślij</button>
+                <button
+                    onClick={() => setShowEmojiPicker((prev) => !prev)}
+                    style={{marginLeft: "5px"}}
+                >
+                  🙂
+                </button>
               </div>
-            )}
+              {showEmojiPicker && (
+                  <div style={{marginTop: "10px"}}>
+                    <Picker
+                        data={data}
+                        onEmojiSelect={(emoji) => setNewMessage((prev) => prev + emoji.native)}
+                        locale="pl"
+                        previewPosition="none"
+                    />
+                  </div>
+              )}
+            </div>
           </div>
-        </div>
       )}
 
       {matches.length > 0 && (
-        <div className="match-list">
-          <h3>Twoje matche:</h3>
-          <ul>
-            {matches.map((m, i) => <li key={i}>{m}</li>)}
-          </ul>
-        </div>
+          <div className="match-list">
+            <h3>Twoje matche:</h3>
+            <ul>
+              {matches.map((m, i) => <li key={i}>{m}</li>)}
+            </ul>
+          </div>
       )}
 
       {showMatchModal && (
-        <div className="match-modal">
-          <div className="modal-content">
-            <h2>🎉 Masz nowy match!</h2>
-            <p>Jesteś sparowany z {matchedUser}</p>
-            <button onClick={() => setShowMatchModal(false)}>Zamknij</button>
+          <div className="match-modal">
+            <div className="modal-content">
+              <h2>🎉 Masz nowy match!</h2>
+              <p>Jesteś sparowany z {matchedUser}</p>
+              <button onClick={() => setShowMatchModal(false)}>Zamknij</button>
+            </div>
           </div>
-        </div>
       )}
     </div>
   );
