@@ -416,20 +416,20 @@
   font-weight: bold;
 }
 
-/* 🔔 Nowa wiadomość - migający przycisk */
+
 .messages-button.new-message {
   animation: pulse 1s infinite;
   position: relative;
 }
 
-/* 🔴 Kropka lub dzwoneczek obok przycisku */
+
 .notif-dot, .notif-pulse {
   color: red;
   font-size: 18px;
   margin-left: 5px;
 }
 
-/* 🔄 Animacja „pulse” */
+
 @keyframes pulse {
   0% { transform: scale(1); }
   50% { transform: scale(1.2); color: red; }

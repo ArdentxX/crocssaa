@@ -59,7 +59,7 @@ const LoggedHomePage = () => {
 
     socketRef.current.on("receive-message", (data) => {
       setChatMessages((prev) => [...prev, `${data.from}: ${data.message}`]);
-      if (data.from !== activeChatUser) {
+      if (!chatVisible) {
         setHasNewMessage(true);
       }
     });
