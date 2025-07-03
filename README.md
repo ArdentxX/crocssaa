@@ -1,4 +1,4 @@
-# Crocssa.pl 👟💬
+# Crocssa.pl 
 
 **Crocssa.pl** to społecznościowa aplikacja randkowo-wymianowa inspirowana Tinderem – ale skoncentrowana wyłącznie na **crocsach**. Użytkownicy mogą prezentować swoje crocsy, łączyć się z innymi fanami tego obuwia i prowadzić rozmowy w czasie rzeczywistym.
 
