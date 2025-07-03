@@ -328,10 +328,11 @@ const LoggedHomePage = () => {
                   >
                     <div
                       style={{
-                        background: isOwn ? "#c86add" : "#eee",
+                        background: isOwn ? "#c967ff" : "#eee",
                         padding: "8px 12px",
                         borderRadius: "16px",
                         maxWidth: "60%",
+                        wordBreak: "break-word",
                       }}
                     >
                       <strong>{from}</strong>: {message}
