@@ -287,8 +287,8 @@
   position: fixed;
   left: 20px; /* zmiana z right na left */
   bottom: 0;
-  width: 300px;
-  height: 50vh; /* 50% wysokości ekranu */
+  width: 400px;
+  height: 90vh; /* 50% wysokości ekranu */
   background-color: #fff;
   border: 1px solid #ccc;
   box-shadow: 0 0 10px rgba(0,0,0,0.2);

@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 import "../css/loggedHomePage.css";
+import Picker from "@emoji-mart/react";
+import data from "@emoji-mart/data";
 
 const LoggedHomePage = () => {
   const [showModal, setShowModal] = useState(false);
@@ -23,9 +25,9 @@ const LoggedHomePage = () => {
   const [matches, setMatches] = useState([]);
   const [hasNewMatch, setHasNewMatch] = useState(false);
   const [activeChatUser, setActiveChatUser] = useState(null);
-
   const [showMatchModal, setShowMatchModal] = useState(false);
   const [matchedUser, setMatchedUser] = useState(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const username = localStorage.getItem("username");
   const navigate = useNavigate();
@@ -46,7 +48,6 @@ const LoggedHomePage = () => {
 
     socketRef.current.on("match-found", (data) => {
       setMatches((prev) => [...new Set([...prev, data.with])]);
-
       if (data.is_initiator) {
         setHasNewMatch(true);
       } else {
@@ -64,7 +65,6 @@ const LoggedHomePage = () => {
     };
   }, [username]);
 
-  // 🔥 ZAŁADUJ HISTORIĘ wiadomości po zmianie rozmówcy
   useEffect(() => {
     const loadChatHistory = async () => {
       if (!activeChatUser) return;
@@ -84,9 +84,7 @@ const LoggedHomePage = () => {
 
   const fetchProfileData = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/homepage/${username}`, {
-        headers: { username },
-      });
+      const res = await fetch(`http://localhost:5000/homepage/${username}`, { headers: { username } });
       if (res.ok) {
         const data = await res.json();
         setProfile(data.profile);
@@ -96,9 +94,7 @@ const LoggedHomePage = () => {
 
   const fetchSwipePhotos = async () => {
     try {
-      const res = await fetch("http://localhost:5000/all_card_images", {
-        headers: { username },
-      });
+      const res = await fetch("http://localhost:5000/all_card_images", { headers: { username } });
       if (res.ok) {
         const data = await res.json();
         setSwipePhotos(data.photos);
@@ -145,16 +141,11 @@ const LoggedHomePage = () => {
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
-
     try {
-      const res = await fetch(`http://localhost:5000/search_profiles?q=${searchQuery}`, {
-        headers: { username },
-      });
-
+      const res = await fetch(`http://localhost:5000/search_profiles?q=${searchQuery}`, { headers: { username } });
       if (res.ok) {
         const data = await res.json();
         const found = data.profiles[0];
-
         if (found && found.match) {
           if (!matches.includes(found.username)) {
             setMatches((prev) => [...prev, found.username]);
@@ -172,11 +163,7 @@ const LoggedHomePage = () => {
 
   const sendMessage = () => {
     if (newMessage.trim() && activeChatUser) {
-      socketRef.current.emit("send-message", {
-        from: username,
-        to: activeChatUser,
-        message: newMessage,
-      });
+      socketRef.current.emit("send-message", { from: username, to: activeChatUser, message: newMessage });
       setChatMessages((prev) => [...prev, `${username}: ${newMessage}`]);
       setNewMessage("");
     }
@@ -191,10 +178,7 @@ const LoggedHomePage = () => {
       if (profilePic) {
         const fd = new FormData();
         fd.append("file", profilePic);
-        const up = await fetch(`http://localhost:5000/upload/${username}`, {
-          method: "POST",
-          body: fd,
-        });
+        const up = await fetch(`http://localhost:5000/upload/${username}`, { method: "POST", body: fd });
         if (up.ok) uploadedProfilePic = (await up.json()).profile_pic;
       }
 
@@ -202,10 +186,7 @@ const LoggedHomePage = () => {
       if (cardImageFile) {
         const fd = new FormData();
         fd.append("file", cardImageFile);
-        const up = await fetch(`http://localhost:5000/upload_card_image/${username}`, {
-          method: "POST",
-          body: fd,
-        });
+        const up = await fetch(`http://localhost:5000/upload_card_image/${username}`, { method: "POST", body: fd });
         if (up.ok) uploadedCardImage = (await up.json()).card_image;
       }
 
@@ -242,12 +223,11 @@ const LoggedHomePage = () => {
   const closeModal = () => setShowModal(false);
   const toggleChat = () => setChatVisible((v) => !v);
   const currentSwipePhoto = swipePhotos[currentSwipeIndex];
+
   return (
     <div className="logged-homepage">
       <nav className="navbar">
-        <div className="navbar-left">
-
-        </div>
+        <div className="navbar-left"></div>
         <div className="navbar-center">
           <input
             type="text"
@@ -255,9 +235,7 @@ const LoggedHomePage = () => {
             className="navbar-search"
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-          <button className="search-button" onClick={handleSearch}>
-            Search
-          </button>
+          <button className="search-button" onClick={handleSearch}>Search</button>
         </div>
         <div className="navbar-right">
           <button onClick={openModal}>Edit Profile</button>
@@ -276,10 +254,7 @@ const LoggedHomePage = () => {
 
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: "50px" }}>
         {currentSwipePhoto ? (
-          <div
-            key={currentSwipeIndex}
-            className={`swipe-card ${swiping ? `swipe-${swipeDirection}` : ""}`}
-          >
+          <div key={currentSwipeIndex} className={`swipe-card ${swiping ? `swipe-${swipeDirection}` : ""}`}>
             <img
               src={`http://localhost:5000/swipe_uploads/${currentSwipePhoto.card_image}?t=${Date.now()}`}
               alt="Swipe"
@@ -287,19 +262,13 @@ const LoggedHomePage = () => {
             />
           </div>
         ) : (
-          <p style={{ color: "gray", fontSize: "18px" }}>
-            TO NARAZIE WSZYSTKO, WROC ZA JAKIS CZAS
-          </p>
+          <p style={{ color: "gray", fontSize: "18px" }}>TO NARAZIE WSZYSTKO, WROC ZA JAKIS CZAS</p>
         )}
 
         {currentSwipePhoto && (
           <div className="swipe-buttons">
-            <button onClick={() => handleSwipe("left")} className="swipe-left-btn">
-              Swipe Left
-            </button>
-            <button onClick={() => handleSwipe("right")} className="swipe-right-btn">
-              Swipe Right
-            </button>
+            <button onClick={() => handleSwipe("left")} className="swipe-left-btn">Swipe Left</button>
+            <button onClick={() => handleSwipe("right")} className="swipe-right-btn">Swipe Right</button>
           </div>
         )}
       </div>
@@ -349,15 +318,33 @@ const LoggedHomePage = () => {
               <p>Brak wiadomości</p>
             )}
           </div>
-          <div style={{ display: "flex", padding: "10px" }}>
-            <input
-              type="text"
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Napisz coś..."
-              style={{ flex: 1, marginRight: "10px" }}
-            />
-            <button onClick={sendMessage}>Wyślij</button>
+          <div style={{ display: "flex", flexDirection: "column", padding: "10px" }}>
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <input
+                type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Napisz coś..."
+                style={{ flex: 1, marginRight: "10px" }}
+              />
+              <button onClick={sendMessage}>Wyślij</button>
+              <button
+                onClick={() => setShowEmojiPicker((prev) => !prev)}
+                style={{ marginLeft: "5px" }}
+              >
+                🙂
+              </button>
+            </div>
+            {showEmojiPicker && (
+              <div style={{ marginTop: "10px" }}>
+                <Picker
+                  data={data}
+                  onEmojiSelect={(emoji) => setNewMessage((prev) => prev + emoji.native)}
+                  locale="pl"
+                  previewPosition="none"
+                />
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -366,9 +353,7 @@ const LoggedHomePage = () => {
         <div className="match-list">
           <h3>Twoje matche:</h3>
           <ul>
-            {matches.map((m, i) => (
-              <li key={i}>{m}</li>
-            ))}
+            {matches.map((m, i) => <li key={i}>{m}</li>)}
           </ul>
         </div>
       )}
