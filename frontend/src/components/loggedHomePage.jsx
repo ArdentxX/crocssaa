@@ -283,7 +283,7 @@ const LoggedHomePage = () => {
             <img
               src={`http://localhost:5000/swipe_uploads/${currentSwipePhoto.card_image}?t=${Date.now()}`}
               alt="Swipe"
-              style={{ width: "600px", height: "800px", objectFit: "cover", borderRadius: "8px", border: "2px solid #ccc" }}
+              style={{ width: "400px", height: "500px", objectFit: "cover", borderRadius: "8px", border: "2px solid #ccc" }}
             />
           </div>
         ) : (
