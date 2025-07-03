@@ -28,6 +28,7 @@ const LoggedHomePage = () => {
   const [showMatchModal, setShowMatchModal] = useState(false);
   const [matchedUser, setMatchedUser] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [hasNewMessage, setHasNewMessage] = useState(false);
 
   const username = localStorage.getItem("username");
   const navigate = useNavigate();
@@ -58,12 +59,15 @@ const LoggedHomePage = () => {
 
     socketRef.current.on("receive-message", (data) => {
       setChatMessages((prev) => [...prev, `${data.from}: ${data.message}`]);
+      if (data.from !== activeChatUser) {
+        setHasNewMessage(true);
+      }
     });
 
     return () => {
       socketRef.current.disconnect();
     };
-  }, [username]);
+  }, [username, activeChatUser]);
 
   useEffect(() => {
     const loadChatHistory = async () => {
@@ -221,7 +225,17 @@ const LoggedHomePage = () => {
   };
 
   const closeModal = () => setShowModal(false);
-  const toggleChat = () => setChatVisible((v) => !v);
+  const toggleChat = () => {
+    setChatVisible((v) => !v);
+    setHasNewMessage(false);
+  };
+
+  const logout = async () => {
+    await fetch("http://localhost:5000/api/logout", { method: "POST" });
+    localStorage.removeItem("username");
+    navigate("/");
+  };
+
   const currentSwipePhoto = swipePhotos[currentSwipeIndex];
 
   return (
@@ -239,24 +253,26 @@ const LoggedHomePage = () => {
         </div>
         <div className="navbar-right">
           <button onClick={openModal}>Edit Profile</button>
-          <button className="messages-button" onClick={toggleChat}>
+          <button className={`messages-button ${hasNewMessage ? "new-message" : ""}`} onClick={toggleChat}>
             Messages {hasNewMatch && <span className="notif-dot">●</span>}
+            {hasNewMessage && <span className="notif-pulse">🛎</span>}
           </button>
+          <button onClick={logout}>Wyloguj</button>
           {profile.profile_pic && (
-            <img
-              src={`http://localhost:5000/uploads/${profile.profile_pic}`}
-              alt="Profile"
-              className="navbar-profile-pic"
-            />
+              <img
+                  src={`http://localhost:5000/uploads/${profile.profile_pic}`}
+                  alt="Profile"
+                  className="navbar-profile-pic"
+              />
           )}
         </div>
       </nav>
 
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: "50px" }}>
+      <div style={{display: "flex", flexDirection: "column", alignItems: "center", marginTop: "50px"}}>
         {currentSwipePhoto ? (
-          <div key={currentSwipeIndex} className={`swipe-card ${swiping ? `swipe-${swipeDirection}` : ""}`}>
-            <img
-              src={`http://localhost:5000/swipe_uploads/${currentSwipePhoto.card_image}?t=${Date.now()}`}
+            <div key={currentSwipeIndex} className={`swipe-card ${swiping ? `swipe-${swipeDirection}` : ""}`}>
+              <img
+                  src={`http://localhost:5000/swipe_uploads/${currentSwipePhoto.card_image}?t=${Date.now()}`}
               alt="Swipe"
               style={{ width: "400px", height: "500px", objectFit: "cover", borderRadius: "8px", border: "2px solid #ccc" }}
             />
