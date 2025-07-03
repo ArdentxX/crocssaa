@@ -313,7 +313,32 @@ const LoggedHomePage = () => {
           </div>
           <div className="chat-content">
             {chatMessages.length > 0 ? (
-              chatMessages.map((msg, i) => <p key={i}>{msg}</p>)
+              chatMessages.map((msg, i) => {
+                const [from, ...rest] = msg.split(": ");
+                const message = rest.join(": ");
+                const isOwn = from === username;
+                return (
+                  <div
+                    key={i}
+                    style={{
+                      display: "flex",
+                      justifyContent: isOwn ? "flex-end" : "flex-start",
+                      marginBottom: "4px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        background: isOwn ? "#c86add" : "#eee",
+                        padding: "8px 12px",
+                        borderRadius: "16px",
+                        maxWidth: "60%",
+                      }}
+                    >
+                      <strong>{from}</strong>: {message}
+                    </div>
+                  </div>
+                );
+              })
             ) : (
               <p>Brak wiadomości</p>
             )}
