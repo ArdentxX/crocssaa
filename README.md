@@ -15,3 +15,5 @@ Aplikacja pozwala na:
 - Kinga Surma
 - Radoslav Andrievich Bronkovich
 - Kacper Pabian (Ardent Amelka)
+![image](https://github.com/user-attachments/assets/fb88e842-8233-4826-a173-ca721b94a47c)
+
