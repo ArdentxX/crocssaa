@@ -80,6 +80,3 @@ python main.py
 - **Radoslav Andrievich Bronkovich** 
 - **Kacper Pabian (Ardent Amelka)** 
 
----
-
-## Crocssa – Znajdź swoją parę. Dosłownie.
