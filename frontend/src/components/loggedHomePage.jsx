@@ -246,10 +246,7 @@ const LoggedHomePage = () => {
     <div className="logged-homepage">
       <nav className="navbar">
         <div className="navbar-left">
-          <h2 className="navbar-brand">
-            <img src="/assets/Nowy projekt.svg" alt="logo" height={30} />
-            OIO
-          </h2>
+
         </div>
         <div className="navbar-center">
           <input

@@ -4,8 +4,8 @@
   font-weight: 400;
 
   color-scheme: light dark;
-  color: rgba(42, 42, 42, 0.87);
-  background: linear-gradient(to left, #0997c5,#1a57a1 ,#01056b);
+  color: rgb(255, 255, 255);
+  background: linear-gradient(to left, #9b0eb5, #ca00ff, #67307e);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -54,14 +54,16 @@ h1 {
 
 button {
   border-radius: 8px;
-  border: 1px solid transparent;
+  border: 3px solid white ;
   padding: 0.6em 1.2em;
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: #ca00ff;
   cursor: pointer;
   transition: border-color 0.25s;
+  margin-left: 10px;
+  margin-right: 10px;
 }
 button:hover {
   border-color: #646cff;

@@ -15,7 +15,7 @@ const Home = () => {
 
     return (
         <div className="Home-container">
-            <h1>Big Dick in Your Town</h1>
+            <h1>Find your footers</h1>
             <button onClick={registerfunc}>Register</button>
             <button onClick={loginfunc}>Login</button>
         </div>

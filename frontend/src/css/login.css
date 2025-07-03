@@ -4,7 +4,7 @@
     margin: 100px auto;
     padding: 40px;
     background-color: #ffffff;
-    border: 10px solid #0997c5;
+    border: 10px solid #9b0eb5;
     border-radius: 50px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
@@ -14,7 +14,7 @@
     text-align: center;
     margin-bottom: 20px;
     font-size: 30px;
-    color: #0997c5;
+    color: #9b0eb5;
 }
 
 /* Form and Input Styling */
@@ -64,7 +64,7 @@
 }
 
 .login-button:hover {
-    background-color: #0997c5;
+    background-color: #9b0eb5;
 }
 
 /* Error Message Styling */

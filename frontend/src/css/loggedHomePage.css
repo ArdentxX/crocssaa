@@ -16,7 +16,7 @@
 .modal-content {
     background-color: #fff;
     padding: 40px;
-    border: 10px solid #0997c5;
+    border: 10px solid #9b0eb5;
     border-radius: 50px;
     width: 500px; /* Increase width */
     max-width: 100%;
@@ -36,7 +36,7 @@
 /* Header section (Edytuj profil) */
 .modal-content h2 {
     font-size: 24px;
-    color: #0997c5;
+    color: #9b0eb5;
     text-align: left;
     margin-bottom: 30px;
     font-weight: bold;
@@ -117,7 +117,7 @@
 }
 
 .submit-button:hover {
-    background-color: #0997c5;
+    background-color: #9b0eb5;
 }
 
 /* Cancel button styling */
@@ -218,7 +218,7 @@
 
 /* Hover effect for the toggle button */
 .sidebar-toggle:hover {
-    background-color: #0d8fbd;
+    background-color: #9b0eb5;
 }
 
 .main-title {
@@ -279,13 +279,13 @@
     height: 400px;
     object-fit: cover;
     border-radius: 10px;
-    border: 2px solid #0997c5;
+    border: 2px solid #9b0eb5;
 }
 
 /* Chat panel styles with slide-up animation */
 .chat-panel {
   position: fixed;
-  right: 20px;
+  left: 20px; /* zmiana z right na left */
   bottom: 0;
   width: 300px;
   height: 50vh; /* 50% wysokości ekranu */
@@ -299,7 +299,9 @@
   display: flex;
   flex-direction: column;
   z-index: 1000;
+    color: black;
 }
+
 
 .chat-panel.visible {
   transform: translateY(0);
@@ -308,8 +310,8 @@
 
 .chat-header {
   padding: 10px;
-  background-color: #eee;
-  border-bottom: 1px solid #ccc;
+  background-color: #9b0eb5;
+  border-bottom: 1px solid #ffffff;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -388,16 +390,20 @@
   gap: 20px;
 }
 .swipe-left-btn, .swipe-right-btn {
-  padding: 10px 20px;
-  font-size: 16px;
+    border-radius: 8px;
+  border: 3px solid white ;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #ca00ff;
   cursor: pointer;
-  background-color: #1934497a;
-  color: white;
-  border: none;
-  border-radius: 5px;
+  transition: border-color 0.25s;
+  margin-left: 10px;
+  margin-right: 10px;
 }
 .swipe-left-btn:hover, .swipe-right-btn:hover {
-  background-color: #0997c5;
+  background-color: #9b0eb5;
 }
 
 .match-banner {
